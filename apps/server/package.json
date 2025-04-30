@@ -1,0 +1,29 @@
+{
+  "name": "server",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "check-types": "tsc --noEmit",
+    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2",
+    "@trpc/server": "^11.0.0",
+    "@trpc/client": "^11.0.0",
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "better-auth": "^1.2.7"
+  },
+  "devDependencies": {
+    "tsc-alias": "^1.8.11",
+    "typescript": "^5.8.2",
+    "@types/express": "^5.0.1",
+    "@types/cors": "^2.8.17",
+    "tsx": "^4.19.2",
+    "@types/node": "^22.13.11"
+  }
+}
