@@ -28,6 +28,11 @@ export default function UserMenu() {
     );
   }
 
+  // Safely access user properties with null checks
+  const userName = session.user?.name || "User";
+  const userEmail = session.user?.email || "No email";
+  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,7 +41,7 @@ export default function UserMenu() {
       <DropdownMenuContent className="bg-card">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
+        <DropdownMenuItem>{session.user?.email || "No email"}</DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Button
             variant="destructive"

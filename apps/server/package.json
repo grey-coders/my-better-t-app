@@ -7,10 +7,14 @@
     "check-types": "tsc --noEmit",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "6.7.0",
+    "@jest/globals": "^29.7.0",
+    "@prisma/client": "^6.7.0",
     "@trpc/client": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "@types/bcryptjs": "^3.0.0",
@@ -19,6 +23,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "prisma": "^6.7.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -26,6 +31,9 @@
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.11",
     "prisma": "6.7.0",
+    "tsc-alias": "^1.8.11",
+    "@types/node": "^22.13.11",
+    "jest": "^29.7.0",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.2",
     "typescript": "^5.8.2"

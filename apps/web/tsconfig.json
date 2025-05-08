@@ -1,18 +1,23 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
-    "types": ["vite/client"],
-    "rootDirs": ["."],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"esModuleInterop": true,
+		"moduleResolution": "node",
+		"verbatimModuleSyntax": false,
+		"strict": true,
+		"skipLibCheck": true,
+		"baseUrl": "./",
+		"paths": {
+		  "@/*": ["./src/*"]
+		},
+		"outDir": "./dist",
+		"types": [
+        "node", "jest"
+    ],
+		"jsx": "react-jsx"
+	},
+	"tsc-alias": {
+		"resolveFullPaths": true
+	}
 }

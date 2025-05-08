@@ -38,8 +38,6 @@ cd apps/server && pnpm db:local
 ```bash
 pnpm db:push
 ```
-
-
 Then, run the development server:
 
 ```bash
