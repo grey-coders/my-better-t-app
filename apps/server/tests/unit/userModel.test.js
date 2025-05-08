@@ -16,21 +16,21 @@ describe('User Model Integration Tests', () => {
     // Create a new user
     const newUser = await prisma.user.create({
       data: {
-        name: 'Jane Doe',
-        email: 'jane.doe@example.com',
+        name: 'admin',
+        email: 'admin@gmail.com',
         password: 'securepassword',
       },
     });
 
     expect(newUser).toHaveProperty('id');
-    expect(newUser.name).toBe('Jane Doe');
+    expect(newUser.name).toBe('admin');
 
     // Retrieve the user
     const user = await prisma.user.findUnique({
-      where: { email: 'jane.doe@example.com' },
+      where: { email: 'admin@gmail.com' },
     });
 
     expect(user).not.toBeNull();
-    expect(user.name).toBe('Jane Doe');
+    expect(user.name).toBe('admin');
   });
 });

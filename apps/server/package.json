@@ -10,20 +10,24 @@
     "start": "node dist/src/index.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.7",
-    "zod": "^3.24.2",
-    "@trpc/server": "^11.0.0",
+    "@prisma/client": "6.7.0",
     "@trpc/client": "^11.0.0",
-    "express": "^5.1.0",
+    "@trpc/server": "^11.0.0",
+    "@types/bcryptjs": "^3.0.0",
+    "bcryptjs": "^3.0.2",
+    "better-auth": "^1.2.7",
     "cors": "^2.8.5",
-    "better-auth": "^1.2.7"
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "tsc-alias": "^1.8.11",
-    "typescript": "^5.8.2",
-    "@types/express": "^5.0.1",
     "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.11",
+    "prisma": "6.7.0",
+    "tsc-alias": "^1.8.11",
     "tsx": "^4.19.2",
-    "@types/node": "^22.13.11"
+    "typescript": "^5.8.2"
   }
 }

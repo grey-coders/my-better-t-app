@@ -6,6 +6,8 @@ import cors from "cors";
 import express from "express";
 import { auth } from "./lib/auth";
 import { toNodeHandler } from "better-auth/node";
+import bcrypt from "bcryptjs";
+import { PrismaClient } from "../generated/prisma-client";
 
 const app = express();
 
