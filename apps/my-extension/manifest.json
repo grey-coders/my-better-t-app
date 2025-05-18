@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "CV Match Extension",
+  "version": "1.0.0",
+  "description": "Check how well your CV matches a job description.",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "action": {
+    "default_popup": "src/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"]
+    }
+  ]
+}
