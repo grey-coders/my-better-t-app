@@ -13,5 +13,5 @@
     "dev:web": "pnpm --filter web dev",
     "dev:server": "pnpm --filter server dev"
   },
-  "packageManager": "pnpm@10.9.0"
+  "packageManager": "pnpm@10.11.1"
 }
