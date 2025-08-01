@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # Frontend web application only
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: my-better-t-app-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
