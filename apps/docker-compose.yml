@@ -1,0 +1,67 @@
+# =============================================================================
+# DOCKER COMPOSE FOR MY-BETTER-T-APP
+# =============================================================================
+# Orchestrates both web frontend and server backend
+# Uses environment variables from .env file
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # Frontend React application with Vite
+  web:
+    build: ./apps/web
+    ports:
+      - "3001:3001"  # Map host port 3001 to container port 3001
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+  # Backend Node.js server with Express and tRPC
+  server:
+    build: ./apps/server
+    ports:
+      - "3000:3000"  # Map host port 3000 to container port 3000
+    environment:
+      # Reference environment variables from .env file
+      - DATABASE_URL=${DATABASE_URL}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+    volumes:
+      # Mount local database file so data persists between container restarts
+      - ./apps/server/local.db:/app/local.db
+      # Mount data directory for any additional database files
+      - server-data:/app/data
+    networks:
+      - app-network
+
+# Named volumes for data persistence
+volumes:
+  server-data:
+
+# Custom network for service communication
+networks:
+  app-network:
+    driver: bridge
+
+# =============================================================================
+# USAGE INSTRUCTIONS:
+# 
+# 1. Create a .env file in the root directory with:
+#    DATABASE_URL=file:./local.db
+#    CORS_ORIGIN=http://localhost:3001
+#    BETTER_AUTH_SECRET=your-secret-here
+#    BETTER_AUTH_URL=http://localhost:3000
+#
+# 2. Run the application:
+#    docker-compose up --build
+#
+# 3. Access the application:
+#    Frontend: http://localhost:3001
+#    Backend API: http://localhost:3000
+#
+# 4. To stop:
+#    docker-compose down
+# =============================================================================
