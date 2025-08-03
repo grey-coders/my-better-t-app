@@ -2,7 +2,7 @@
 # DOCKER COMPOSE FOR MY-BETTER-T-APP
 # =============================================================================
 # Orchestrates both web frontend and server backend
-# Uses environment variables from .env file
+# Uses global .env file - each service picks what it needs!
 # =============================================================================
 
 version: '3.8'
@@ -13,6 +13,9 @@ services:
     build: ./apps/web
     ports:
       - "3001:3001"  # Map host port 3001 to container port 3001
+    environment:
+      # Frontend picks only frontend variables from .env
+      - VITE_SERVER_URL=${VITE_SERVER_URL}
     depends_on:
       - server
     networks:
@@ -24,11 +27,12 @@ services:
     ports:
       - "3000:3000"  # Map host port 3000 to container port 3000
     environment:
-      # Reference environment variables from .env file
-      - DATABASE_URL=${DATABASE_URL}
+      # Backend picks only backend variables from .env
+      - PORT=${PORT}
       - CORS_ORIGIN=${CORS_ORIGIN}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     volumes:
       # Mount local database file so data persists between container restarts
       - ./apps/server/local.db:/app/local.db
@@ -49,19 +53,19 @@ networks:
 # =============================================================================
 # USAGE INSTRUCTIONS:
 # 
-# 1. Create a .env file in the root directory with:
-#    DATABASE_URL=file:./local.db
-#    CORS_ORIGIN=http://localhost:3001
-#    BETTER_AUTH_SECRET=your-secret-here
-#    BETTER_AUTH_URL=http://localhost:3000
+# 1. Run the setup script:
+#    ./setup.sh
 #
-# 2. Run the application:
-#    docker-compose up --build
-#
-# 3. Access the application:
+# 2. Access the application:
 #    Frontend: http://localhost:3001
 #    Backend API: http://localhost:3000
 #
-# 4. To stop:
+# 3. To stop:
 #    docker-compose down
+#
+# 4. To restart:
+#    docker-compose restart
+#
+# The setup script creates a global .env file with all variables.
+# Each service picks only what it needs from the .env file.
 # =============================================================================
