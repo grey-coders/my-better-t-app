@@ -41,6 +41,23 @@ services:
     networks:
       - app-network
 
+  # Prisma Studio for database management
+  prisma-studio:
+    build: ./apps/server
+    ports:
+      - "5555:5555"  # Map host port 5555 to container port 5555
+    environment:
+      # Prisma Studio needs database connection
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      # Same database file as server
+      - ./apps/server/local.db:/app/local.db
+    command: ["pnpx", "prisma", "studio", "--port", "5555", "--hostname", "0.0.0.0"]
+    depends_on:
+      - server
+    networks:
+      - app-network
+
 # Named volumes for data persistence
 volumes:
   server-data:
@@ -59,12 +76,17 @@ networks:
 # 2. Access the application:
 #    Frontend: http://localhost:3001
 #    Backend API: http://localhost:3000
+#    Database Studio: http://localhost:5555
 #
 # 3. To stop:
 #    docker-compose down
 #
 # 4. To restart:
 #    docker-compose restart
+#
+# 5. To start only specific services:
+#    docker-compose up web server          # Without Prisma Studio
+#    docker-compose up prisma-studio       # Only Prisma Studio
 #
 # The setup script creates a global .env file with all variables.
 # Each service picks only what it needs from the .env file.
