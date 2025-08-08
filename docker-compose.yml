@@ -1,0 +1,93 @@
+# =============================================================================
+# DOCKER COMPOSE FOR MY-BETTER-T-APP
+# =============================================================================
+# Orchestrates both web frontend and server backend
+# Uses global .env file - each service picks what it needs!
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # Frontend React application with Vite
+  web:
+    build: ./apps/web
+    ports:
+      - "3001:3001"  # Map host port 3001 to container port 3001
+    environment:
+      # Frontend picks only frontend variables from .env
+      - VITE_SERVER_URL=${VITE_SERVER_URL}
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+  # Backend Node.js server with Express and tRPC
+  server:
+    build: ./apps/server
+    ports:
+      - "3000:3000"  # Map host port 3000 to container port 3000
+    environment:
+      # Backend picks only backend variables from .env
+      - PORT=${PORT}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - DATABASE_URL=${DATABASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+    volumes:
+      # Mount local database file so data persists between container restarts
+      - ./apps/server/local.db:/app/local.db
+      # Mount data directory for any additional database files
+      - server-data:/app/data
+    networks:
+      - app-network
+
+  # Prisma Studio for database management
+  prisma-studio:
+    build: ./apps/server
+    ports:
+      - "5555:5555"  # Map host port 5555 to container port 5555
+    environment:
+      # Prisma Studio needs database connection
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      # Same database file as server
+      - ./apps/server/local.db:/app/local.db
+    command: ["pnpx", "prisma", "studio", "--port", "5555", "--hostname", "0.0.0.0"]
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+# Named volumes for data persistence
+volumes:
+  server-data:
+
+# Custom network for service communication
+networks:
+  app-network:
+    driver: bridge
+
+# =============================================================================
+# USAGE INSTRUCTIONS:
+# 
+# 1. Run the setup script:
+#    ./setup.sh
+#
+# 2. Access the application:
+#    Frontend: http://localhost:3001
+#    Backend API: http://localhost:3000
+#    Database Studio: http://localhost:5555
+#
+# 3. To stop:
+#    docker-compose down
+#
+# 4. To restart:
+#    docker-compose restart
+#
+# 5. To start only specific services:
+#    docker-compose up web server          # Without Prisma Studio
+#    docker-compose up prisma-studio       # Only Prisma Studio
+#
+# The setup script creates a global .env file with all variables.
+# Each service picks only what it needs from the .env file.
+# =============================================================================
