@@ -1,17 +1,15 @@
-// apps/server/src/lib/auth.ts 
-
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "../../generated/prisma/index.js";
- 
+
+const SEVEN_DAYS = 60 * 60 * 24 * 7
+const ONE_DAY = 60 * 60 * 24
 const prisma = new PrismaClient();
 
-
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET, // <- ADD THIS LINE
-  database: prismaAdapter(prisma, {
-    provider: "sqlite", // Using SQLite as the database provider
-  }),
+  database: prismaAdapter(prisma),
+  secret: process.env.BETTER_AUTH_SECRET,
+
   trustedOrigins: [
     process.env.CORS_ORIGIN || "",
   ],
@@ -19,7 +17,7 @@ export const auth = betterAuth({
     enabled: true,
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: SEVEN_DAYS, // 7 days
+    updateAge: ONE_DAY , // 1 day
   },
 });

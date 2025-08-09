@@ -34,8 +34,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     volumes:
-      # Mount local database file so data persists between container restarts
-      - ./apps/server/local.db:/app/local.db
+      # Use named volume for database file to avoid directory conflicts
+      - database-data:/app
       # Mount data directory for any additional database files
       - server-data:/app/data
     networks:
@@ -50,8 +50,8 @@ services:
       # Prisma Studio needs database connection
       - DATABASE_URL=${DATABASE_URL}
     volumes:
-      # Same database file as server
-      - ./apps/server/local.db:/app/local.db
+      # Use same named volume as server for database access
+      - database-data:/app
     command: ["pnpx", "prisma", "studio", "--port", "5555", "--hostname", "0.0.0.0"]
     depends_on:
       - server
@@ -61,6 +61,7 @@ services:
 # Named volumes for data persistence
 volumes:
   server-data:
+  database-data:
 
 # Custom network for service communication
 networks:
