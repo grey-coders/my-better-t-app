@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET, // <- ADD THIS LINE
   database: prismaAdapter(prisma, {
     provider: "sqlite", // Since we are using SQLite...right ?
   }),
