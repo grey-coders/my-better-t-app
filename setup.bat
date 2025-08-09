@@ -19,7 +19,7 @@ if %errorlevel% neq 0 (
 )
 
 REM Check if Docker Compose is installed
-docker-compose --version >nul 2>&1
+docker compose --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo  Docker Compose is not installed. Please install Docker Compose first.
     pause
@@ -44,8 +44,8 @@ echo  Created .env file with placeholder secret
 
 REM Step 2: Build and start Docker containers
 echo  Building and starting Docker containers...
-docker-compose down --remove-orphans >nul 2>&1
-docker-compose up --build -d
+docker compose down --remove-orphans >nul 2>&1
+docker compose up --build -d
 
 REM Step 3: Wait for services to start
 echo  Waiting for services to start...
@@ -54,7 +54,7 @@ timeout /t 10 /nobreak >nul
 REM Step 4: Generate Better Auth secret using running container
 echo  Generating Better Auth secret...
 set "SECRET="
-for /f "delims=" %%i in ('docker-compose exec -T server pnpx @better-auth/cli@latest secret 2^>nul') do (
+for /f "delims=" %%i in ('docker compose exec -T server pnpx @better-auth/cli@latest secret 2^>nul') do (
     set "line=%%i"
     echo !line! | findstr /v "npm" >nul
     if !errorlevel! equ 0 (
@@ -67,7 +67,7 @@ set "SECRET=!SECRET: =!"
 for /f "delims=" %%i in ("!SECRET!") do set "SECRET=%%i"
 
 if "!SECRET!"=="" (
-    echo  Failed to generate secret. Check logs: docker-compose logs server
+    echo  Failed to generate secret. Check logs: docker compose logs server
     pause
     exit /b 1
 )
@@ -78,7 +78,7 @@ powershell -Command "(Get-Content .env) -replace 'BETTER_AUTH_SECRET=placeholder
 
 REM Step 6: Restart server with new secret
 echo  Restarting server with new secret...
-docker-compose restart server
+docker compose restart server
 timeout /t 3 /nobreak >nul
 
 echo.

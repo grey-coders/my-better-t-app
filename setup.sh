@@ -17,7 +17,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo " Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -40,8 +40,8 @@ echo " Created .env file with placeholder secret"
 
 # Step 2: Build and start Docker containers
 echo " Building and starting Docker containers..."
-docker-compose down --remove-orphans 2>/dev/null || true
-docker-compose up --build -d
+docker compose down --remove-orphans 2>/dev/null || true
+docker compose up --build -d
 
 # Step 3: Wait for services to start
 echo " Waiting for services to start..."
@@ -49,10 +49,10 @@ sleep 10
 
 # Step 4: Generate Better Auth secret using running container
 echo " Generating Better Auth secret..."
-SECRET=$(docker-compose exec -T server pnpx @better-auth/cli@latest secret 2>/dev/null | grep -v "npm" | tail -1 | tr -d '\r\n')
+SECRET=$(docker compose exec -T server pnpx @better-auth/cli@latest secret 2>/dev/null | grep -v "npm" | tail -1 | tr -d '\r\n')
 
 if [ -z "$SECRET" ]; then
-    echo " Failed to generate secret. Check logs: docker-compose logs server"
+    echo " Failed to generate secret. Check logs: docker compose logs server"
     exit 1
 fi
 
@@ -66,7 +66,7 @@ fi
 
 # Step 6: Restart server with new secret
 echo " Restarting server with new secret..."
-docker-compose restart server
+docker compose restart server
 sleep 3
 
 echo ""
