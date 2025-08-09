@@ -33,7 +33,7 @@ VITE_SERVER_URL=http://localhost:3000
 PORT=3000
 CORS_ORIGIN=http://localhost:3001
 BETTER_AUTH_URL=http://localhost:3000
-DATABASE_URL=file:./prisma/local.db
+DATABASE_URL=file:./local.db
 BETTER_AUTH_SECRET=placeholder-secret-will-be-replaced
 EOF
 
