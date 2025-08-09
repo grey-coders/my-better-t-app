@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 REM =============================================================================
 REM My Better T-App Setup Script
 REM =============================================================================
-REM Creates global .env file, starts Docker, then generates Better Auth secret
+REM Deletes .env, creates fresh one, starts Docker, then generates Better Auth secret
 REM =============================================================================
 
 echo  Setting up My Better T-App...
@@ -19,15 +19,16 @@ if %errorlevel% neq 0 (
 )
 
 REM Check if Docker Compose is installed
-docker-compose --version >nul 2>&1
+docker compose --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo  Docker Compose is not installed. Please install Docker Compose first.
     pause
     exit /b 1
 )
 
-REM Step 1: Create global .env file with placeholder secret
-echo  Creating global .env file...
+REM Step 1: Delete existing .env and create fresh one
+echo  Deleting existing .env and creating fresh one...
+if exist .env del .env
 (
 echo # Frontend Environment Variables
 echo VITE_SERVER_URL=http://localhost:3000
@@ -40,54 +41,61 @@ echo DATABASE_URL=file:./local.db
 echo BETTER_AUTH_SECRET=placeholder-secret-will-be-replaced
 ) > .env
 
-echo  Created .env file with placeholder secret
+echo  Created fresh .env file with placeholder secret
 
-REM Step 2: Build and start Docker containers
+REM Step 2: Clean up any existing database directory
+echo  Cleaning up database files...
+if exist "apps\server\local.db" rmdir /s /q "apps\server\local.db" 2>nul
+
+REM Step 3: Build and start Docker containers
 echo  Building and starting Docker containers...
-docker-compose down --remove-orphans >nul 2>&1
-docker-compose up --build -d
+docker compose down --remove-orphans >nul 2>&1
+docker compose up --build -d
 
-REM Step 3: Wait for services to start
+REM Step 4: Wait for services to start
 echo  Waiting for services to start...
-timeout /t 10 /nobreak >nul
+timeout /t 15 /nobreak >nul
 
-REM Step 4: Generate Better Auth secret using running container
+REM Step 5: Create database tables
+echo  Creating database tables...
+docker compose exec server npx prisma migrate dev --name init --skip-generate
+
+REM Step 6: Generate Better Auth secret - FIXED EXTRACTION
 echo  Generating Better Auth secret...
-set "SECRET="
-for /f "delims=" %%i in ('docker-compose exec -T server pnpx @better-auth/cli@latest secret 2^>nul') do (
-    set "line=%%i"
-    echo !line! | findstr /v "npm" >nul
-    if !errorlevel! equ 0 (
-        set "SECRET=!line!"
-    )
+for /f "tokens=2 delims==" %%i in ('docker compose exec -T server pnpx @better-auth/cli@latest secret 2^>nul ^| findstr "BETTER_AUTH_SECRET="') do (
+    set "SECRET=%%i"
 )
 
-REM Clean up the secret (remove carriage returns)
+REM Clean up the secret (remove carriage returns and trailing whitespace)
 set "SECRET=!SECRET: =!"
-for /f "delims=" %%i in ("!SECRET!") do set "SECRET=%%i"
+set "SECRET=!SECRET:~0,-1!"
 
 if "!SECRET!"=="" (
-    echo  Failed to generate secret. Check logs: docker-compose logs server
+    echo  Failed to generate secret. Check logs: docker compose logs server
     pause
     exit /b 1
 )
 
-REM Step 5: Update .env file with real secret
+echo  Generated secret: !SECRET!
+
+REM Step 7: Update .env file with real secret
 echo  Updating .env with real Better Auth secret...
 powershell -Command "(Get-Content .env) -replace 'BETTER_AUTH_SECRET=placeholder-secret-will-be-replaced', 'BETTER_AUTH_SECRET=!SECRET!' | Set-Content .env"
 
-REM Step 6: Restart server with new secret
+REM Step 8: Restart server with new secret
 echo  Restarting server with new secret...
-docker-compose restart server
-timeout /t 3 /nobreak >nul
+docker compose restart server
+timeout /t 5 /nobreak >nul
 
 echo.
 echo  SUCCESS! Your My Better T-App is now running!
 echo ==============================================
 echo  Frontend: http://localhost:3001
 echo  Backend:  http://localhost:3000
+echo  Prisma Studio: http://localhost:5555
 echo.
-echo  Global .env file created with all variables!
+echo  Fresh .env file created with all variables!
 echo  Better Auth secret generated and configured!
+echo  Database tables created successfully!
 echo.
 pause
