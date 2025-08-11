@@ -7,7 +7,9 @@ const ONE_DAY = 60 * 60 * 24
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma),
+  database: prismaAdapter(prisma, {
+    provider: "sqlite",
+  }),
   secret: process.env.BETTER_AUTH_SECRET,
 
   trustedOrigins: [
