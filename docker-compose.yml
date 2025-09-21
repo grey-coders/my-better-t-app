@@ -5,14 +5,12 @@
 # Uses global .env file - each service picks what it needs!
 # =============================================================================
 
-version: '3.8'
-
 services:
   # Frontend React application with Vite
   web:
     build: ./apps/web
     ports:
-      - "3001:3001"  # Map host port 3001 to container port 3001
+      - "3001:3001" # Map host port 3001 to container port 3001
     environment:
       # Frontend picks only frontend variables from .env
       - VITE_SERVER_URL=${VITE_SERVER_URL}
@@ -25,7 +23,7 @@ services:
   server:
     build: ./apps/server
     ports:
-      - "3000:3000"  # Map host port 3000 to container port 3000
+      - "3000:3000" # Map host port 3000 to container port 3000
     environment:
       # Backend picks only backend variables from .env
       - PORT=${PORT}
@@ -45,7 +43,7 @@ services:
   prisma-studio:
     build: ./apps/server
     ports:
-      - "5555:5555"  # Map host port 5555 to container port 5555
+      - "5555:5555" # Map host port 5555 to container port 5555
     environment:
       # Prisma Studio needs database connection
       - DATABASE_URL=${DATABASE_URL}
@@ -67,10 +65,9 @@ volumes:
 networks:
   app-network:
     driver: bridge
-
 # =============================================================================
 # USAGE INSTRUCTIONS:
-# 
+#
 # 1. Run the setup script:
 #    ./setup.sh
 #
