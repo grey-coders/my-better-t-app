@@ -341,7 +341,7 @@ function RouteComponent() {
                           <div className="flex items-center gap-3 flex-wrap">
                             <div className="flex items-center gap-2">
                               <FileText className="h-5 w-5 text-gray-500" />
-                              <h3 className="font-medium text-gray-900">{cv.title}</h3>
+                              <h3 className="font-medium text-gray-900 truncate max-w-xs overflow-hidden whitespace-nowrap">{cv.title}</h3>
                             </div>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                               {fileType}
