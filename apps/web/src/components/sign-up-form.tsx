@@ -8,6 +8,12 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+const formSchema = z.object({
+	name: z.string().min(2, "Name must be at least 2 characters"),
+	email: z.string().email("Invalid email address"),
+	password: z.string().min(8, "Password must be at least 8 characters"),
+})
+
 export default function SignUpForm({
 	onSwitchToSignIn,
 }: {
@@ -27,9 +33,9 @@ export default function SignUpForm({
 		onSubmit: async ({ value }) => {
 			await authClient.signUp.email(
 				{
+					name: value.name,
 					email: value.email,
 					password: value.password,
-					name: value.name,
 				},
 				{
 					onSuccess: () => {
@@ -45,11 +51,7 @@ export default function SignUpForm({
 			);
 		},
 		validators: {
-			onSubmit: z.object({
-				name: z.string().min(2, "Name must be at least 2 characters"),
-				email: z.string().email("Invalid email address"),
-				password: z.string().min(8, "Password must be at least 8 characters"),
-			}),
+			onSubmit: formSchema,
 		},
 	});
 

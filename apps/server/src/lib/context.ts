@@ -11,5 +11,4 @@ export async function createContext(opts: CreateExpressContextOptions) {
 	};
 }
 
-
 export type Context = Awaited<ReturnType<typeof createContext>>;
