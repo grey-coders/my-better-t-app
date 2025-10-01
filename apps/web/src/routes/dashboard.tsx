@@ -1,25 +1,28 @@
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Upload, X } from "lucide-react";
+import { FileText, Upload, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({
   component: RouteComponent,
 });
 
-// Interface for CV data
+// Interface for CV data from backend
 interface CV {
-  id: number;
+  id: string;
   title: string;
-  type: string;
-  date: string;
   description: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Interface for job check history
@@ -28,45 +31,6 @@ interface JobCheckHistory {
   url: string;
   date: string;
 }
-
-// Sample CV data
-const sampleCVs: CV[] = [
-  {
-    id: 1,
-    title: "Senior Frontend Developer",
-    type: "PDF",
-    date: "May 15, 2023",
-    description: "5+ years of experience in React and TypeScript",
-  },
-  {
-    id: 2,
-    title: "Full Stack Engineer",
-    type: "DOCX",
-    date: "Jun 22, 2023",
-    description: "Experienced in Node.js, React, and cloud technologies",
-  },
-  {
-    id: 3,
-    title: "UI/UX Designer",
-    type: "PDF",
-    date: "Jul 10, 2023",
-    description: "Specialized in creating beautiful user experiences",
-  },
-  {
-    id: 4,
-    title: "Backend Specialist",
-    type: "PDF",
-    date: "Aug 5, 2023",
-    description: "Expert in Python, Django, and database optimization",
-  },
-  {
-    id: 5,
-    title: "DevOps Engineer",
-    type: "DOCX",
-    date: "Aug 15, 2023",
-    description: "Specialized in CI/CD pipelines and cloud infrastructure",
-  },
-];
 
 // Sample job check history
 const sampleJobHistory: JobCheckHistory[] = [
@@ -95,10 +59,77 @@ function RouteComponent() {
   const [selectedCV, setSelectedCV] = useState<CV | null>(null);
   const [jobUrl, setJobUrl] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = Route.useNavigate();
 
-  const privateData = useQuery(trpc.privateData.queryOptions());
+  // Infinite query for CVs list
+  const {
+    data: cvsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isCVsLoading,
+    refetch: refetchCVs,
+  } = trpc.cv.list.useInfiniteQuery(
+    {
+      limit: 10,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      enabled: !!session,
+    }
+  );
+
+  const uploadCVMutation = trpc.cv.upload.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        data.titleChanged
+          ? `CV uploaded successfully as "${data.cv.title}"`
+          : "CV uploaded successfully!"
+      );
+      setCvTitle("");
+      setCvDescription("");
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      refetchCVs();
+    },
+    onError: (error) => {
+      toast.error(`Failed to upload CV: ${error.message}`);
+    },
+  });
+
+  // Flatten all CVs from pages
+  const allCVs = cvsData?.pages.flatMap((page) => page.items) ?? [];
+
+  // Intersection observer for infinite scroll
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     if (!session && !isPending) {
@@ -112,13 +143,63 @@ function RouteComponent() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  const handleUploadClick = () => {
-    // File upload functionality would be implemented here
-    console.log("Upload CV clicked", { cvTitle, cvDescription });
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      setSelectedFile(file);
+    }
   };
 
-  const handleCheckMatch = (cvId: number) => {
-    const cv = sampleCVs.find(c => c.id === cvId);
+  const handleUploadClick = async () => {
+    if (!cvTitle.trim()) {
+      toast.error("Please enter a CV title");
+      return;
+    }
+    if (!cvDescription.trim()) {
+      toast.error("Please enter a CV description");
+      return;
+    }
+    if (!selectedFile) {
+      toast.error("Please select a file");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64String = reader.result?.toString().split(",")[1] || "";
+
+        await uploadCVMutation.mutateAsync({
+          title: cvTitle,
+          description: cvDescription,
+          fileName: selectedFile.name,
+          fileData: base64String,
+          mimeType: selectedFile.type,
+          fileSize: selectedFile.size,
+        });
+
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read file");
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(selectedFile);
+    } catch (error) {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCheckMatch = (cvId: string) => {
+    const cv = allCVs.find(c => c.id === cvId);
     if (cv) {
       setSelectedCV(cv);
       setSidebarOpen(true);
@@ -191,13 +272,17 @@ function RouteComponent() {
                 <Label>Upload CV File</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
                   <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-2">Choose File</p>
-                  <p className="text-sm text-gray-500">PDF, DOC, or DOCX files accepted</p>
+                  <p className="text-gray-600 mb-2">
+                    {selectedFile ? selectedFile.name : "Choose File"}
+                  </p>
+                  <p className="text-sm text-gray-500">PDF, DOC, or DOCX files accepted (max 5MB)</p>
                   <input
+                    ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.doc,.docx"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     className="hidden"
                     id="cv-file"
+                    onChange={handleFileChange}
                   />
                   <label
                     htmlFor="cv-file"
@@ -208,8 +293,19 @@ function RouteComponent() {
                 </div>
               </div>
 
-              <Button onClick={handleUploadClick} className="w-full bg-gray-600 hover:bg-gray-700">
-                Upload CV
+              <Button
+                onClick={handleUploadClick}
+                className="w-full bg-gray-600 hover:bg-gray-700"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload CV"
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -220,32 +316,59 @@ function RouteComponent() {
               <CardTitle className="text-xl font-semibold">Your CVs</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {sampleCVs.map((cv) => (
-                  <div key={cv.id} className="border rounded-lg p-4 bg-white shadow-sm">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-gray-500" />
-                          <h3 className="font-medium text-gray-900">{cv.title}</h3>
+              {isCVsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : allCVs.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No CVs uploaded yet. Upload your first CV to get started!</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {allCVs.map((cv) => {
+                    const fileType = cv.mimeType === "application/pdf" ? "PDF" :
+                                     cv.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ? "DOCX" : "DOC";
+                    const formattedDate = new Date(cv.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
+
+                    return (
+                      <div key={cv.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-5 w-5 text-gray-500" />
+                              <h3 className="font-medium text-gray-900">{cv.title}</h3>
+                            </div>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {fileType}
+                            </span>
+                            <span className="text-sm text-gray-500">{formattedDate}</span>
+                          </div>
                         </div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {cv.type}
-                        </span>
-                        <span className="text-sm text-gray-500">{cv.date}</span>
+                        <p className="text-sm text-gray-600 mb-4">{cv.description}</p>
+                        <Button
+                          onClick={() => handleCheckMatch(cv.id)}
+                          variant="outline"
+                          className="w-full bg-gray-600 hover:bg-gray-700 text-white border-gray-600"
+                        >
+                          Check Match
+                        </Button>
                       </div>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{cv.description}</p>
-                    <Button
-                      onClick={() => handleCheckMatch(cv.id)}
-                      variant="outline"
-                      className="w-full bg-gray-600 hover:bg-gray-700 text-white border-gray-600"
-                    >
-                      Check Match
-                    </Button>
+                    );
+                  })}
+
+                  {/* Infinite scroll trigger */}
+                  <div ref={observerTarget} className="py-4 text-center">
+                    {isFetchingNextPage && (
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -36,8 +36,9 @@ export default function SignInForm({
 						});
 						toast.success("Sign in successful");
 					},
-					onError: (error) => {
-						toast.error(error.error.message);
+					onError: (ctx) => {
+						const errorMessage = ctx.error?.message || "Sign in failed. Please try again.";
+						toast.error(errorMessage);
 					},
 				},
 			);
