@@ -163,6 +163,19 @@ exports.Prisma.VerificationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CVScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  fileName: 'fileName',
+  fileData: 'fileData',
+  mimeType: 'mimeType',
+  fileSize: 'fileSize',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -178,7 +191,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   Session: 'Session',
   Account: 'Account',
-  Verification: 'Verification'
+  Verification: 'Verification',
+  CV: 'CV'
 };
 
 /**

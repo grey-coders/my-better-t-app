@@ -17,7 +17,7 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
   },
   session: {
     expiresIn: SEVEN_DAYS,

@@ -44,8 +44,9 @@ export default function SignUpForm({
 						});
 						toast.success("Sign up successful");
 					},
-					onError: (error) => {
-						toast.error(error.error.message);
+					onError: (ctx) => {
+						const errorMessage = ctx.error?.message || "Sign up failed. Please try again.";
+						toast.error(errorMessage);
 					},
 				},
 			);
