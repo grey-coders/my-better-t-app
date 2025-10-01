@@ -44,7 +44,19 @@ export const cvRouter = router({
 
       // Auto-append version number if title exists (Option 4)
       if (existingCV) {
-        const titlePattern = new RegExp(`^${input.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s\\((\\d+)\\))?$`);
+        // Utility function to escape special regex characters in a string
+        function escapeRegExp(str: string): string {
+          return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+        // Regex pattern explanation:
+        // ^<title>(\s\((\d+)\))?$
+        // - ^ : start of string
+        // - <title> : the escaped title string
+        // - (\s\((\d+)\))? : optional version number in the format " (n)"
+        // - $ : end of string
+        const titlePattern = new RegExp(
+          `^${escapeRegExp(input.title)}(\\s\\((\\d+)\\))?$`
+        );
         const allMatchingTitles = await prisma.cV.findMany({
           where: {
             userId,
